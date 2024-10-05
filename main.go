@@ -25,7 +25,7 @@ func main() {
 		RemoteHost: *remoteHost,
 	}
 
-	     fmt.Printf("config: %s\n", config)
+	fmt.Printf("config: %s\n", config)
 
 }
 
