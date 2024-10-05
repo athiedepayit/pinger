@@ -15,3 +15,12 @@ design goals:
     - run command (i.e. curl a webhook) on failure and recovery
 
 Going to attempt to write this in go since it provides a good standard http library
+
+
+How you run two copies on the same machine:
+
+"A" side: `./pinger -interval 10 -port 8881 -remote "http://localhost:8882"`
+
+"B" side: `./pinger -interval 10 -port 8882 -remote "http://localhost:8881"`
+
+

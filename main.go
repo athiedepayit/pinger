@@ -12,6 +12,19 @@ type Config struct {
 	Interval   int
 	ListenPort int
 	RemoteHost string
+	ErrCommand string
+	RecCommand string
+}
+
+func (cfg Config) Print() {
+	// Yes I KNOW multiline strings exist, but they're UGLY
+	fmt.Printf("---\n")
+	fmt.Printf("- Interval: %v\n", cfg.Interval)
+	fmt.Printf("- ListenPort: %v\n", cfg.ListenPort)
+	fmt.Printf("- RemoteHost: %v\n", cfg.RemoteHost)
+	fmt.Printf("- ErrCommand: %v\n", cfg.ErrCommand)
+	fmt.Printf("- RecCommand: %v\n", cfg.RecCommand)
+	fmt.Printf("---\n")
 }
 
 func main() {
@@ -25,6 +38,9 @@ func main() {
 	listenPort := flag.Int("port", defaultPort, "local port to listen")
 	remoteHost := flag.String("remote", defaultRemote, "remote host to check")
 
+	errCommand := flag.String("errorcmd", "", "command to run when check errors")
+	recCommand := flag.String("recoverycmd", "", "command to run when check recovers")
+
 	flag.Parse()
 
 	// temp default before reading from a config file
@@ -32,10 +48,11 @@ func main() {
 		Interval:   *interval,
 		ListenPort: *listenPort,
 		RemoteHost: *remoteHost,
+		RecCommand: *recCommand,
+		ErrCommand: *errCommand,
 	}
 
-	// print config
-	fmt.Printf("---\nconfig:\n- Interval %v\n- ListenPort %v\n- RemoteHost %s\n---\n", config.Interval, config.ListenPort, config.RemoteHost)
+	config.Print()
 
 	var checkResult bool
 	go WebServer(&config, &checkResult)
@@ -55,14 +72,17 @@ func RunChecks(cfg *Config) (bool, error) {
 
 func CheckLoop(cfg *Config, checkResult *bool) {
 	for {
-
+		// Sleeping first, to make sure that you have time to get both
+		// sides running. Don't want to bring one side up, then
+		// immediately have it send both an error and a recovery alert
+		// before you have enough time to start the other side.
+		time.Sleep(time.Second * time.Duration(cfg.Interval))
 		localResult, err := RunChecks(cfg)
 		if err != nil {
 			fmt.Printf("Error running check: %s\n", err)
 		}
 		fmt.Printf("checking...\nresult is %t\n", localResult)
 		*checkResult = localResult
-		time.Sleep(time.Second * time.Duration(cfg.Interval))
 	}
 }
 
