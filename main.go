@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net"
+	"io"
+	"net/http"
+	"time"
 )
 
 type Config struct {
@@ -35,15 +37,51 @@ func main() {
 	// print config
 	fmt.Printf("---\nconfig:\n- Interval %v\n- ListenPort %v\n- RemoteHost %s\n---\n", config.Interval, config.ListenPort, config.RemoteHost)
 
-	RunChecks(&config)
+	var checkResult bool
+	go WebServer(&config, &checkResult)
+	CheckLoop(&config, &checkResult)
+
 }
 
 func RunChecks(cfg *Config) (bool, error) {
-	d := net.Dialer{Timeout: 3}
-	conn, err := d.Dial("tcp", cfg.RemoteHost)
+	fmt.Printf("checking %s\n", cfg.RemoteHost)
+	resp, err := http.Get(cfg.RemoteHost)
 	if err != nil {
 		return false, err
 	}
-	conn.Close()
+	defer resp.Body.Close()
 	return true, nil
+}
+
+func CheckLoop(cfg *Config, checkResult *bool) {
+	for {
+
+		localResult, err := RunChecks(cfg)
+		if err != nil {
+			fmt.Printf("Error running check: %s\n", err)
+		}
+		fmt.Printf("checking...\nresult is %t\n", localResult)
+		*checkResult = localResult
+		time.Sleep(time.Second * time.Duration(cfg.Interval))
+	}
+}
+
+func WebServer(config *Config, checkResult *bool) {
+
+	handleFunc := func(w http.ResponseWriter, r *http.Request) {
+		if *checkResult {
+			io.WriteString(w, "OK\n")
+		} else {
+			io.WriteString(w, "Error\n")
+		}
+	}
+
+	http.HandleFunc("/health", handleFunc)
+
+	portStr := fmt.Sprintf(":%v", config.ListenPort)
+	err := http.ListenAndServe(fmt.Sprintf("%v", portStr), nil)
+	if err != nil {
+		fmt.Printf("error serving on port: %s\n", err)
+	}
+	fmt.Println("Server exiting!")
 }
