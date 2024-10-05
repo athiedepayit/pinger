@@ -3,7 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 )
+
+type Config struct {
+	Interval   int
+	ListenPort int
+	RemoteHost string
+}
 
 func main() {
 
@@ -25,12 +32,18 @@ func main() {
 		RemoteHost: *remoteHost,
 	}
 
-	fmt.Printf("config: %s\n", config)
+	// print config
+	fmt.Printf("---\nconfig:\n- Interval %v\n- ListenPort %v\n- RemoteHost %s\n---\n", config.Interval, config.ListenPort, config.RemoteHost)
 
+	RunChecks(&config)
 }
 
-type Config struct {
-	Interval   int
-	ListenPort int
-	RemoteHost string
+func RunChecks(cfg *Config) (bool, error) {
+	d := net.Dialer{Timeout: 3}
+	conn, err := d.Dial("tcp", cfg.RemoteHost)
+	if err != nil {
+		return false, err
+	}
+	conn.Close()
+	return true, nil
 }
