@@ -23,4 +23,7 @@ How you run two copies on the same machine:
 
 "B" side: `./pinger -interval 10 -port 8882 -remote "http://localhost:8881"`
 
+Using commands:
+
+Optionally you can specify `-recoverycmd` and `-errorcmd` commands. These are strings that are just run as commands in a shell. Probably quote them when you run it on the command line. So if you run "curl" you'd better have curl installed. Making this just use external commands greatly simplifies things; on a desktop you can use `-errorcmd "notify-send -u critical SERVER DOWN"` for example.
 
