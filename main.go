@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os/exec"
 	"time"
 )
 
@@ -70,6 +71,16 @@ func RunChecks(cfg *Config) (bool, error) {
 	return true, nil
 }
 
+func ExecCommand(command string) error {
+	fmt.Printf("sending command '%s'\n", command)
+	execCommand := exec.Command("sh", "-c", command)
+	err := execCommand.Run()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func CheckLoop(cfg *Config, checkResult *bool) {
 	for {
 		// Sleeping first, to make sure that you have time to get both
@@ -82,6 +93,20 @@ func CheckLoop(cfg *Config, checkResult *bool) {
 			fmt.Printf("Error running check: %s\n", err)
 		}
 		fmt.Printf("checking...\nresult is %t\n", localResult)
+
+		// if the local result is true, and previously it was false, send a recovery command
+		if !*checkResult && localResult {
+			if cfg.RecCommand != "" {
+				ExecCommand(cfg.RecCommand)
+			}
+		}
+		// and the opposite, if the command was true, and now it's false, send an error command
+		if *checkResult && !localResult {
+			if cfg.ErrCommand != "" {
+				ExecCommand(cfg.ErrCommand)
+			}
+		}
+
 		*checkResult = localResult
 	}
 }
