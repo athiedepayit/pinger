@@ -1,13 +1,13 @@
 package main
 
 import (
-    "fmt"
-    "errors"
-    "net"
-    "time"
+	"errors"
+	"fmt"
+	"net"
+	"time"
 )
 
-const timeout = time.Second*3
+const timeout = time.Second * 3
 
 func CheckTcp(host string, port string) (bool, error) {
 	// these values should be configurable
