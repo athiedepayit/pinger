@@ -70,8 +70,10 @@ func WebServer(config *Config, checkResult *bool) {
 
 	handleFunc := func(w http.ResponseWriter, r *http.Request) {
 		if *checkResult {
+			w.WriteHeader(http.StatusOK)
 			io.WriteString(w, "OK\n")
 		} else {
+			w.WriteHeader(http.StatusInternalServerError)
 			io.WriteString(w, "Error\n")
 		}
 	}
