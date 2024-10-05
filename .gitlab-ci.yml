@@ -1,0 +1,13 @@
+default:
+  image: golang:alpine
+lint:
+  stage: test
+  script: |
+    #!/bin/ash 
+    apk add git
+    git remote add gitlab https://oauth2:$ACCESS_TOKEN@gitlab.com/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+    git checkout $CI_COMMIT_BRANCH
+    go fmt ./***.go
+    git config user.email "ci@gitlab.com" && git config user.name "gitlab-ci"
+    git commit -am "formatted" || echo "No changes, nothing to commit!"
+    git push gitlab $CI_COMMIT_BRANCH
