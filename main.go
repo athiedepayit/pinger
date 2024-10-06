@@ -123,7 +123,16 @@ func WebServer(config *Config, checkResult *bool) {
 		}
 	}
 
+	promHandler := func(w http.ResponseWriter, r *http.Request) {
+		if *checkResult {
+			io.WriteString(w, "pinger_health 1\n")
+		} else {
+			io.WriteString(w, "pinger_health 0\n")
+		}
+	}
+
 	http.HandleFunc("/health", handleFunc)
+	http.HandleFunc("/metrics", promHandler)
 
 	portStr := fmt.Sprintf(":%v", config.ListenPort)
 	err := http.ListenAndServe(fmt.Sprintf("%v", portStr), nil)
