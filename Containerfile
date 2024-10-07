@@ -1,4 +1,4 @@
-FROM golang:alpine as builder
+FROM golang:alpine AS builder
 RUN apk add git && git clone https://gitlab.com/adamthiede/pinger && cd pinger && go build && mv ./pinger /pinger
 
 FROM alpine:latest
