@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - 9000:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command: --config.file=/etc/prometheus/prometheus.yml
+  pinger1:
+    image: localhost/pinger:1
+    ports:
+      - 8761:8761
+    command: ["-interval", "10", "-port", "8761", "-remote", "http://pinger2:8762"]
+  pinger2:
+    image: localhost/pinger:1
+    ports:
+      - 8762:8762
+    command: ["-interval", "10", "-port", "8762", "-remote", "http://pinger1:8761"]
+
