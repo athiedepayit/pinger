@@ -1,0 +1,34 @@
+name: auto format
+permissions: write-all
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: changed
+        id: changed
+        uses: tj-actions/changed-files@v45
+      - name: format
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          go fmt ./*.go
+          git config user.email "${{ github.triggering_actor }}@users.noreply.github.com"
+          git config user.name "${{ github.triggering_actor }}"
+          git checkout $BRANCH
+          git status | grep "nothing to commit" && exit 0 || echo ''
+          git commit -am "auto-format"
+          git push origin $BRANCH
